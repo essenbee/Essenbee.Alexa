@@ -17,7 +17,7 @@ namespace Essenbee.Alexa.Lib.Request
         public Application Application { get; set; }
 
         [JsonProperty("attributes")]
-        public Attributes Attributes { get; set; }
+        public Dictionary<string, object> Attributes { get; set; }
 
         [JsonProperty("user")]
         public User User { get; set; }
