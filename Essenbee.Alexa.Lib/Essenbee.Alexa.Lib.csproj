@@ -2,6 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Authors>Essenbee</Authors>
+    <Company>Codebase Alpha Live Coing Stream</Company>
+    <Description>A library to support building Alexa skills</Description>
   </PropertyGroup>
 
   <ItemGroup>
