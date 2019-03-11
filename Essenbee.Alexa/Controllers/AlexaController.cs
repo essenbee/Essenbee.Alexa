@@ -7,17 +7,32 @@ using Essenbee.Alexa.Lib.Request;
 using Essenbee.Alexa.Lib.Response;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 
 namespace Essenbee.Alexa.Controllers
 {
     [ApiController]
+    [Produces("application/json")]
     public class AlexaController : ControllerBase
     {
-        [HttpPost]
-        [Route("api/alexa/devstreams")]
-        public AlexaResponse DevStreams ([FromBody] AlexaRequest alexaRequest )
+        private IConfiguration _config; 
+        public AlexaController(IConfiguration config)
         {
-            // ToDo: ensure that request is meant for us
+            _config = config;
+        }
+
+        [HttpPost]
+        [ProducesResponseType(200, Type = typeof(AlexaResponse))]
+        [ProducesResponseType(400)]
+        [Route("api/alexa/devstreams")]
+        public ActionResult<AlexaResponse> DevStreams ([FromBody] AlexaRequest alexaRequest )
+        {
+            if (!alexaRequest.Session.Application.ApplicationId.Equals(_config["Skillid"]))
+            {
+                System.Diagnostics.Trace.WriteLine("Bad Request - application id did not match!");
+                System.Diagnostics.Trace.Flush();
+                return BadRequest();
+            }
 
             AlexaResponse response = null;
             var responseBuilder = new ResponseBuilder();
@@ -31,11 +46,19 @@ namespace Essenbee.Alexa.Controllers
                 case "IntentRequest":
                     response = IntentRequestHandler(alexaRequest);
                     break;
+                case "SessionEndedRequest":
+                    response = SessionEndedRequestHandler(alexaRequest);
+                    break;
                 default:
                     break;
             }
 
             return response;
+        }
+
+        private AlexaResponse SessionEndedRequestHandler(AlexaRequest alexaRequest)
+        {
+            return null;
         }
 
         private AlexaResponse IntentRequestHandler(AlexaRequest alexaRequest)
@@ -53,8 +76,11 @@ namespace Essenbee.Alexa.Controllers
             {
                 switch (intentRequest.Intent.Name)
                 {
-                    case "devstreams":
-                        response = DevStreamsResponseHandler(intentRequest);
+                    case "whenNextIntent":
+                        response = WhenNextResponseHandler(intentRequest);
+                        break;
+                    case "whoIsLiveIntent":
+                        response = WhoIsLiveResponseHandler(intentRequest);
                         break;
                     case "AMAZON.StopIntent":
                     case "AMAZON.CancelIntent":
@@ -87,7 +113,7 @@ namespace Essenbee.Alexa.Controllers
             return response;
         }
 
-        private AlexaResponse DevStreamsResponseHandler(IntentRequest intentRequest)
+        private AlexaResponse WhenNextResponseHandler(IntentRequest intentRequest)
         {
             var channel = "some streamer";
 
@@ -98,6 +124,15 @@ namespace Essenbee.Alexa.Controllers
 
             var response = new ResponseBuilder()
                 .Say($"You have asked about {channel} and their schedule")
+                .Build();
+
+            return response;
+        }
+
+        private AlexaResponse WhoIsLiveResponseHandler(IntentRequest intentRequest)
+        {
+            var response = new ResponseBuilder()
+                .Say($"Codebase Alpha is streaming now")
                 .Build();
 
             return response;
