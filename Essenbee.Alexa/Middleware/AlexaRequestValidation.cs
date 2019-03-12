@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 namespace Essenbee.Alexa.Middleware
 {
@@ -11,10 +10,12 @@ namespace Essenbee.Alexa.Middleware
     public class AlexaRequestValidation
     {
         private readonly RequestDelegate _next;
+        private readonly ILogger<AlexaRequestValidation> _logger;
 
-        public AlexaRequestValidation(RequestDelegate next)
+        public AlexaRequestValidation(RequestDelegate next, ILogger<AlexaRequestValidation> logger)
         {
             _next = next;
+            _logger = logger;
         }
 
         public async Task Invoke(HttpContext httpContext)
@@ -22,22 +23,23 @@ namespace Essenbee.Alexa.Middleware
             if (!httpContext.Request.Headers.Keys.Contains("Signature") ||
                 !httpContext.Request.Headers.Keys.Contains("SignatureCertChainUrl"))
             {
+                _logger.LogError("Bad Request - Signature or SignatureCertChainUrl missing");
+
                 httpContext.Response.StatusCode = 400; // Bad Request
                 await httpContext.Response.WriteAsync("Signature or SignatureCertChainUrl missing");
 
                 return;
             }
 
-            var foundCertChainUrl = httpContext.Response.Headers.TryGetValue("SignatureCertChainUrl",
-                out var sigCertChainUrl);
-
-            var certChainUrl = foundCertChainUrl ? sigCertChainUrl.First()
+            var sigCertChainUrl = httpContext.Request.Headers["SignatureCertChainUrl"];
+            var certChainUrl = sigCertChainUrl.Any()
+                ? sigCertChainUrl.First()
                 : string.Empty;
-
-            System.Diagnostics.Trace.WriteLine($"Certificate Chain Url = >{certChainUrl}<");
 
             if (string.IsNullOrWhiteSpace(certChainUrl))
             {
+                _logger.LogError("Bad Request - SignatureCertChainUrl was null");
+
                 httpContext.Response.StatusCode = 400; // Bad Request
                 await httpContext.Response.WriteAsync("SignatureCertChainUrl was null");
 

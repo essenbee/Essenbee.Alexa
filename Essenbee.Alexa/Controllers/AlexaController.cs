@@ -27,7 +27,7 @@ namespace Essenbee.Alexa.Controllers
         [Route("api/alexa/devstreams")]
         public ActionResult<AlexaResponse> DevStreams ([FromBody] AlexaRequest alexaRequest )
         {
-            if (!alexaRequest.Session.Application.ApplicationId.Equals(_config["Skillid"]))
+            if (!alexaRequest.Session.Application.ApplicationId.Equals(_config["SkillId"]))
             {
                 System.Diagnostics.Trace.WriteLine("Bad Request - application id did not match!");
                 System.Diagnostics.Trace.Flush();
