@@ -1,10 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Runtime.Serialization;
 
 namespace Essenbee.Alexa.Lib.Request
 {
-    public class Reason
+    public enum Reason
     {
+        [EnumMember(Value = "USER_INITIATED")]
+        UserInitiated,
+        [EnumMember(Value = "ERROR")]
+        Error,
+        [EnumMember(Value = "EXCEEDED_MAX_REPROMPTS")]
+        ExceededMaxReprompts
     }
 }

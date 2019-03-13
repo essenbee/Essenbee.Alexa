@@ -8,6 +8,7 @@ using Essenbee.Alexa.Lib.Response;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace Essenbee.Alexa.Controllers
 {
@@ -15,10 +16,13 @@ namespace Essenbee.Alexa.Controllers
     [Produces("application/json")]
     public class AlexaController : ControllerBase
     {
-        private IConfiguration _config; 
-        public AlexaController(IConfiguration config)
+        private IConfiguration _config;
+        private ILogger<AlexaController> _logger;
+
+        public AlexaController(IConfiguration config, ILogger<AlexaController> logger)
         {
             _config = config;
+            _logger = logger;
         }
 
         [HttpPost]
@@ -27,10 +31,22 @@ namespace Essenbee.Alexa.Controllers
         [Route("api/alexa/devstreams")]
         public ActionResult<AlexaResponse> DevStreams ([FromBody] AlexaRequest alexaRequest )
         {
+            _logger.LogInformation("Arrived here!");
+
             if (!alexaRequest.Session.Application.ApplicationId.Equals(_config["SkillId"]))
             {
-                System.Diagnostics.Trace.WriteLine("Bad Request - application id did not match!");
-                System.Diagnostics.Trace.Flush();
+                _logger.LogError("Bad Request - application id did not match!");
+
+                return BadRequest();
+            }
+
+            var timeStamp = alexaRequest.RequestBody.Timestamp;
+            var timeDifference = (DateTime.UtcNow - timeStamp).TotalSeconds;
+
+            if (timeDifference <= 0 || timeDifference > 150)
+            {
+                _logger.LogError("Bad Request - timestamp not within accepted tolerance!");
+
                 return BadRequest();
             }
 
