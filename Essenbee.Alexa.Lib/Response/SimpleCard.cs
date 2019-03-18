@@ -1,8 +1,5 @@
 ﻿using Essenbee.Alexa.Lib.Interfaces;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Essenbee.Alexa.Lib.Response
 {
@@ -19,5 +16,11 @@ namespace Essenbee.Alexa.Lib.Response
         [JsonRequired]
         [JsonProperty("content")]
         public string Content { get; set; }
+
+        public SimpleCard(string title, string text)
+        {
+            Title = title;
+            Content = text;
+        }
     }
 }

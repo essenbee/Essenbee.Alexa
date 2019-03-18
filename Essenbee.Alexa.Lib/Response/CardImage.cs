@@ -1,7 +1,4 @@
 ﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Essenbee.Alexa.Lib.Response
 {
@@ -12,5 +9,11 @@ namespace Essenbee.Alexa.Lib.Response
 
         [JsonProperty("largeImageUrl")]
         public string LargeImageUrl { get; set; }
+
+        public CardImage(string smallImageUrl, string largeImageUrl)
+        {
+            SmallImageUrl = smallImageUrl;
+            LargeImageUrl = largeImageUrl;
+        }
     }
 }

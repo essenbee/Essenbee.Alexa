@@ -8,5 +8,8 @@ namespace Essenbee.Alexa.Lib.Request
         [JsonProperty("reason")]
         [JsonConverter(typeof(StringEnumConverter))]
         public Reason Reason { get; set; }
+
+        [JsonProperty("error")]
+        public Error Error { get; set; }
     }
 }

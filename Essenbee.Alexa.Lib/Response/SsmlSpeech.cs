@@ -1,8 +1,5 @@
 ﻿using Essenbee.Alexa.Lib.Interfaces;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Essenbee.Alexa.Lib.Response
 {
@@ -15,5 +12,10 @@ namespace Essenbee.Alexa.Lib.Response
         [JsonRequired]
         [JsonProperty("ssml")]
         public string Ssml { get; set; }
+
+        public SsmlSpeech(string ssml)
+        {
+            Ssml = ssml;
+        }
     }
 }

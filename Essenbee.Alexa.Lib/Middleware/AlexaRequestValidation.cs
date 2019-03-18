@@ -19,6 +19,17 @@ namespace Essenbee.Alexa.Lib.Middleware
         private readonly ILogger<AlexaRequestValidation> _logger;
         private const string ValidHostName = "s3.amazonaws.com";
 
+        public static string SignatureHeadersMissing = "Bad Request - Signature or SignatureCertChainUrl missing";
+        public static string SignatureClainUrlEmpty = "Bad Request - SignatureCertChainUrl was null";
+        public static string MustUseHttps = "Bad Request - must use https";
+        public static string InvalidHostName = "Bad Request - certificate url has invalid host name";
+        public static string InvalidCertificatePath = "Bad Request - certificate url has invalid path";
+        public static string CertificateNotYetEffective = "Bad Request - certificate is not yet effective";
+        public static string CertificateExpired = "Bad Request - certificate has expired";
+        public static string CertificateInvalidIssuer = "Bad Request - certificate has invalid issuer";
+        public static string InvalidCertificateChain = "Bad Request - invalid certificate chain";
+        public static string InvalidCertificateKey = "Bad Request - invalid certificate key";
+
         public AlexaRequestValidation(RequestDelegate next, ILogger<AlexaRequestValidation> logger)
         {
             _next = next;
@@ -32,10 +43,10 @@ namespace Essenbee.Alexa.Lib.Middleware
             if (!httpContext.Request.Headers.Keys.Contains("Signature") ||
                 !httpContext.Request.Headers.Keys.Contains("SignatureCertChainUrl"))
             {
-                _logger.LogError("Bad Request - Signature or SignatureCertChainUrl missing");
+                _logger.LogError(SignatureHeadersMissing);
 
                 httpContext.Response.StatusCode = 400; // Bad Request
-                await httpContext.Response.WriteAsync("Signature or SignatureCertChainUrl missing");
+                await httpContext.Response.WriteAsync(SignatureHeadersMissing);
 
                 return;
             }
@@ -47,10 +58,10 @@ namespace Essenbee.Alexa.Lib.Middleware
 
             if (string.IsNullOrWhiteSpace(certChainUrl))
             {
-                _logger.LogError("Bad Request - SignatureCertChainUrl was null");
+                _logger.LogError(SignatureClainUrlEmpty);
 
                 httpContext.Response.StatusCode = 400; // Bad Request
-                await httpContext.Response.WriteAsync("SignatureCertChainUrl was null");
+                await httpContext.Response.WriteAsync(SignatureClainUrlEmpty);
 
                 return;
             }
@@ -61,30 +72,30 @@ namespace Essenbee.Alexa.Lib.Middleware
             if (!((certUri.Port == 443 || certUri.IsDefaultPort) &&
                 certUri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)))
             {
-                _logger.LogError("Bad Request - must use https");
+                _logger.LogError(MustUseHttps);
 
                 httpContext.Response.StatusCode = 400; // Bad Request
-                await httpContext.Response.WriteAsync("Must use https");
+                await httpContext.Response.WriteAsync(MustUseHttps);
 
                 return;
             }
 
             if (!certUri.Host.Equals(ValidHostName, StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogError("Bad Request - certificate url has invalid host name");
+                _logger.LogError(InvalidHostName);
 
                 httpContext.Response.StatusCode = 400; // Bad Request
-                await httpContext.Response.WriteAsync("Certificate url has invalid host name");
+                await httpContext.Response.WriteAsync(InvalidHostName);
 
                 return;
             }
 
             if (!certUri.AbsolutePath.StartsWith("/echo.api/"))
             {
-                _logger.LogError("Bad Request - certificate url has invalid path");
+                _logger.LogError(InvalidCertificatePath);
 
                 httpContext.Response.StatusCode = 400; // Bad Request
-                await httpContext.Response.WriteAsync("Certificate url has invalid path");
+                await httpContext.Response.WriteAsync(InvalidCertificatePath);
 
                 return;
             }
@@ -94,46 +105,60 @@ namespace Essenbee.Alexa.Lib.Middleware
                 var certData = client.DownloadData(certUri);
                 var certificate = new X509Certificate2(certData);
 
-                var foundEffectiveDate = DateTime.TryParse(certificate.GetEffectiveDateString(), out var certEffectiveDate);
-                var foundExpiryDate = DateTime.TryParse(certificate.GetExpirationDateString(), out var certExpiryDate);
-
-                if (!foundEffectiveDate || certEffectiveDate > DateTime.UtcNow)
+                if (certificate.NotBefore > DateTime.UtcNow)
                 {
-                    _logger.LogError("Bad Request - certificate is not yet effective");
+                    _logger.LogError(CertificateNotYetEffective);
 
                     httpContext.Response.StatusCode = 400; // Bad Request
-                    await httpContext.Response.WriteAsync("Certificate is not yet effective");
+                    await httpContext.Response.WriteAsync(CertificateNotYetEffective);
 
                     return;
                 }
 
-                if (!foundExpiryDate || certExpiryDate <= DateTime.UtcNow)
+                if (certificate.NotAfter <= DateTime.UtcNow)
                 {
-                    _logger.LogError("Bad Request - certificate has expired");
+                    _logger.LogError(CertificateExpired);
 
                     httpContext.Response.StatusCode = 400; // Bad Request
-                    await httpContext.Response.WriteAsync("Certificate has expired");
+                    await httpContext.Response.WriteAsync(CertificateExpired);
 
                     return;
                 }
 
                 if (!certificate.Subject.Contains("CN=echo-api.amazon.com"))
                 {
-                    _logger.LogError("Bad Request - certificate has invalid issuer");
+                    _logger.LogError(CertificateInvalidIssuer);
 
                     httpContext.Response.StatusCode = 400; // Bad Request
-                    await httpContext.Response.WriteAsync("Certificate has invalid issuer");
+                    await httpContext.Response.WriteAsync(CertificateInvalidIssuer);
 
                     return;
                 }
 
                 // ToDo: All certificates in the chain combine to create a 
                 // chain of trust to a trusted root CA certificate
+                var certificateChain = new X509Chain
+                {
+                    ChainPolicy =
+                    {
+                        RevocationMode = X509RevocationMode.NoCheck
+                    }
+                };
+
+                var hasChainToTrustedCA = certificateChain.Build(certificate);
+
+                if (!hasChainToTrustedCA)
+                {
+                    _logger.LogError(InvalidCertificateChain);
+
+                    httpContext.Response.StatusCode = 400; // Bad Request
+                    await httpContext.Response.WriteAsync(InvalidCertificateChain);
+
+                    return;
+                }
 
                 try
                 {
-                    var publicKeyProvider = certificate.GetRSAPublicKey();
-
                     var signature = httpContext.Request.Headers["Signature"];
                     var signatureString = signature.Any()
                         ? signature.First()
@@ -158,10 +183,10 @@ namespace Essenbee.Alexa.Lib.Middleware
 
                         if (rsaPublicKey == null || !isHashValid)
                         {
-                            _logger.LogError("Bad Request - invalid certificate key");
+                            _logger.LogError(InvalidCertificateKey);
 
                             httpContext.Response.StatusCode = 400; // Bad Request
-                            await httpContext.Response.WriteAsync("Certificate key was invalid");
+                            await httpContext.Response.WriteAsync(InvalidCertificateKey);
 
                             return;
                         }

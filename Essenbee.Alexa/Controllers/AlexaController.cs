@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace Essenbee.Alexa.Controllers
 {
@@ -33,19 +34,9 @@ namespace Essenbee.Alexa.Controllers
         {
             _logger.LogInformation("Arrived here!");
 
-            if (!alexaRequest.Session.Application.ApplicationId.Equals(_config["SkillId"]))
+            if (!AlexaRequest.ShouldProcessRequest(_config["SkillId"], alexaRequest))
             {
-                _logger.LogError("Bad Request - application id did not match!");
-
-                return BadRequest();
-            }
-
-            var timeStamp = alexaRequest.RequestBody.Timestamp;
-            var timeDifference = (DateTime.UtcNow - timeStamp).TotalSeconds;
-
-            if (timeDifference <= 0 || timeDifference > 150)
-            {
-                _logger.LogError("Bad Request - timestamp not within accepted tolerance!");
+                _logger.LogError("Bad Request - application id did not match or timestamp tolerance exceeded!");
 
                 return BadRequest();
             }
@@ -56,7 +47,8 @@ namespace Essenbee.Alexa.Controllers
             switch (alexaRequest.RequestBody.Type)
             {
                 case "LaunchRequest":
-                    response = responseBuilder.Say("Welcome to the Dev Streams skill")
+                    var ssml = @"<speak>Welcome to the Dev Streams skill</speak>";
+                    response = responseBuilder.SayWithSsml(ssml)
                         .Build();
                     break;
                 case "IntentRequest":
@@ -74,6 +66,12 @@ namespace Essenbee.Alexa.Controllers
 
         private AlexaResponse SessionEndedRequestHandler(AlexaRequest alexaRequest)
         {
+            var sessionEndedRequest = alexaRequest.RequestBody as SessionEndedRequest;
+            if (sessionEndedRequest.Error != null)
+            {
+                var error = sessionEndedRequest.Error;
+                _logger.LogError($"{error.ErrorType} - {error.ErrorMessage}");
+            }
             return null;
         }
 
@@ -149,7 +147,11 @@ namespace Essenbee.Alexa.Controllers
         {
             var response = new ResponseBuilder()
                 .Say($"Codebase Alpha is streaming now")
+                .WriteSimpleCard("Streaming Now!", "Codebase Alpha")
                 .Build();
+
+            var jsonResponse = JsonConvert.SerializeObject(response);
+            _logger.LogInformation($"{jsonResponse}");
 
             return response;
         }

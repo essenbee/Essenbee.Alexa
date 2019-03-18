@@ -23,6 +23,24 @@ namespace Essenbee.Alexa.Lib.Request
         public RequestBody RequestBody { get; set; }
 
         public static AlexaRequest FromJson(string json) => JsonConvert.DeserializeObject<AlexaRequest>(json, Converter.Settings);
+
+        public static bool ShouldProcessRequest(string applicationId, AlexaRequest alexaRequest)
+        {
+            if (!alexaRequest.Session.Application.ApplicationId.Equals(applicationId))
+            {
+                return false;
+            }
+
+            var timeStamp = alexaRequest.RequestBody.Timestamp;
+            var timeDifference = (DateTime.UtcNow - timeStamp).TotalSeconds;
+
+            if (timeDifference <= 0 || timeDifference > 150)
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 }
 

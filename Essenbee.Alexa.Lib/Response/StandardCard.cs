@@ -22,5 +22,18 @@ namespace Essenbee.Alexa.Lib.Response
 
         [JsonProperty("image", NullValueHandling = NullValueHandling.Ignore )]
         public CardImage Image { get; set; }
+
+        public StandardCard(string title, string text)
+        {
+            Title = title;
+            Text = text;
+        }
+
+        public StandardCard(string title, string text, string smallImageUrl, string largeImageUrl)
+        {
+            Title = title;
+            Text = text;
+            Image = new CardImage(smallImageUrl, largeImageUrl);
+        }
     }
 }
