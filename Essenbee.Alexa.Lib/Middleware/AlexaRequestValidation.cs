@@ -20,7 +20,7 @@ namespace Essenbee.Alexa.Lib.Middleware
         private const string ValidHostName = "s3.amazonaws.com";
 
         public static string SignatureHeadersMissing = "Bad Request - Signature or SignatureCertChainUrl missing";
-        public static string SignatureClainUrlEmpty = "Bad Request - SignatureCertChainUrl was null";
+        public static string SignatureChainUrlEmpty = "Bad Request - SignatureCertChainUrl was null";
         public static string MustUseHttps = "Bad Request - must use https";
         public static string InvalidHostName = "Bad Request - certificate url has invalid host name";
         public static string InvalidCertificatePath = "Bad Request - certificate url has invalid path";
@@ -58,10 +58,10 @@ namespace Essenbee.Alexa.Lib.Middleware
 
             if (string.IsNullOrWhiteSpace(certChainUrl))
             {
-                _logger.LogError(SignatureClainUrlEmpty);
+                _logger.LogError(SignatureChainUrlEmpty);
 
                 httpContext.Response.StatusCode = 400; // Bad Request
-                await httpContext.Response.WriteAsync(SignatureClainUrlEmpty);
+                await httpContext.Response.WriteAsync(SignatureChainUrlEmpty);
 
                 return;
             }
