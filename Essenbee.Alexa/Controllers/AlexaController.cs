@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using Essenbee.Alexa.Lib;
+using Essenbee.Alexa.Lib.Interfaces;
 using Essenbee.Alexa.Lib.Request;
 using Essenbee.Alexa.Lib.Response;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -19,18 +17,22 @@ namespace Essenbee.Alexa.Controllers
     {
         private IConfiguration _config;
         private ILogger<AlexaController> _logger;
+        private readonly IAlexaClient _client;
+        private string _userTimeZone = string.Empty;
+        private UserAddress _userAddress;
 
-        public AlexaController(IConfiguration config, ILogger<AlexaController> logger)
+        public AlexaController(IConfiguration config, ILogger<AlexaController> logger, IAlexaClient client)
         {
             _config = config;
             _logger = logger;
+            _client = client;
         }
 
         [HttpPost]
         [ProducesResponseType(200, Type = typeof(AlexaResponse))]
         [ProducesResponseType(400)]
         [Route("api/alexa/devstreams")]
-        public ActionResult<AlexaResponse> DevStreams ([FromBody] AlexaRequest alexaRequest )
+        public async Task<ActionResult<AlexaResponse>> DevStreams ([FromBody] AlexaRequest alexaRequest )
         {
             _logger.LogInformation("Arrived here!");
 
@@ -43,6 +45,18 @@ namespace Essenbee.Alexa.Controllers
 
             AlexaResponse response = null;
             var responseBuilder = new ResponseBuilder();
+
+            _userTimeZone = await _client.GetUserTimezone(alexaRequest, _logger);
+            _userAddress = await _client.GetUserAddress(alexaRequest, _logger);
+
+            if (_userAddress.StatusCode == System.Net.HttpStatusCode.Forbidden)
+            {
+                response = responseBuilder.Say("You have not given permission to read your address details. Some aspects of this skill may not function optimally.")
+                    .WriteAskForPermissionsCard(new string[] { "read::alexa:device:all:address" })
+                    .Build();
+
+                return response;
+            }
 
             switch (alexaRequest.RequestBody.Type)
             {
@@ -136,8 +150,12 @@ namespace Essenbee.Alexa.Controllers
                 channel = intentRequest.Intent.Slots["channel"].Value;
             }
 
+            var city = _userAddress.StatusCode == System.Net.HttpStatusCode.OK
+                ? $" in {_userAddress.City}"
+                : string.Empty;
+
             var response = new ResponseBuilder()
-                .Say($"You have asked about {channel} and their schedule")
+                .Say($"You have asked about {channel} and their schedule in your timezone {_userTimeZone}{city}")
                 .Build();
 
             return response;

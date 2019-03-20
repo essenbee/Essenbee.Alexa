@@ -75,6 +75,18 @@ namespace Essenbee.Alexa.Lib
             return this;
         }
 
+        public ResponseBuilder WriteAskForPermissionsCard(string[] permissions)
+        {
+            if (_response.Response is null)
+            {
+                _response.Response = new ResponseBody();
+            }
+
+            _response.Response.ShouldEndSession = true;
+            _response.Response.Card = new AskForPermissionsConsent(permissions);
+            return this;
+        }
+
         public AlexaResponse Build()
         {
             return _response;
