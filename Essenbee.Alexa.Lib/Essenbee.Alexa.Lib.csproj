@@ -1,9 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Authors>Essenbee</Authors>
-    <Company>Codebase Alpha Live Coing Stream</Company>
+    <Company>Codebase Alpha Live Coding Stream</Company>
     <Description>A library to support building Alexa skills</Description>
   </PropertyGroup>
 
