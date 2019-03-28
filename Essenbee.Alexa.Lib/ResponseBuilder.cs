@@ -1,7 +1,5 @@
-﻿using Essenbee.Alexa.Lib.Response;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Essenbee.Alexa.Lib.Request;
+using Essenbee.Alexa.Lib.Response;
 
 namespace Essenbee.Alexa.Lib
 {
@@ -14,7 +12,7 @@ namespace Essenbee.Alexa.Lib
             _response = new AlexaResponse();
         }
 
-        public ResponseBuilder Say(string text)
+        public ResponseBuilder Say(string speech)
         {
             if (_response.Response is null)
             {
@@ -22,7 +20,7 @@ namespace Essenbee.Alexa.Lib
             }
 
             _response.Response.ShouldEndSession = true;
-            _response.Response.OutputSpeech = new TextOutput(text);
+            _response.Response.OutputSpeech = new TextOutput(speech);
             return this;
         }
 
@@ -84,6 +82,74 @@ namespace Essenbee.Alexa.Lib
 
             _response.Response.ShouldEndSession = true;
             _response.Response.Card = new AskForPermissionsConsent(permissions);
+            return this;
+        }
+
+        public ResponseBuilder Ask(string speech, string repromptSpeech)
+        {
+            if (_response.Response is null)
+            {
+                _response.Response = new ResponseBody();
+            }
+
+            _response.Response.ShouldEndSession = false;
+            _response.Response.OutputSpeech = new TextOutput(speech);
+
+            if (!string.IsNullOrWhiteSpace(repromptSpeech))
+            {
+                _response.Response.Reprompt.OutputSpeech = new TextOutput(repromptSpeech);
+            }
+
+            return this;
+        }
+
+        public ResponseBuilder DialogDelegate(Intent updatedIntent = null)
+        {
+            if (_response.Response is null)
+            {
+                _response.Response = new ResponseBody();
+            }
+
+            _response.Response.ShouldEndSession = false;
+            _response.Response.Directives.Add(new DialogDelegate
+            {
+                UpdatedIntent = updatedIntent
+            });
+
+            return this;
+        }
+
+        public ResponseBuilder DialogConfirmSlot(string speech, string slot, Intent updatedIntent = null)
+        {
+            if (_response.Response is null)
+            {
+                _response.Response = new ResponseBody();
+            }
+
+            _response.Response.ShouldEndSession = false;
+            _response.Response.OutputSpeech = new TextOutput(speech);
+            _response.Response.Directives.Add(new DialogConfirmSlot(slot)
+            {
+                UpdatedIntent = updatedIntent
+            });
+
+            return this;
+        }
+
+        public ResponseBuilder DialogAskForSlot(string speech, string slot, Intent updatedIntent = null)
+        {
+            if (_response.Response is null)
+            {
+                _response.Response = new ResponseBody();
+            }
+
+            _response.Response.ShouldEndSession = false;
+            _response.Response.OutputSpeech = new TextOutput(speech);
+            _response.Response.Directives.Add(new DialogElicitSlot(slot)
+            {
+                UpdatedIntent = updatedIntent
+            });
+
             return this;
         }
 

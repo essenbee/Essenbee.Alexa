@@ -5,7 +5,8 @@
     <Authors>Essenbee</Authors>
     <Company>Codebase Alpha Live Coding Stream</Company>
     <Description>A library to support building Alexa skills</Description>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
