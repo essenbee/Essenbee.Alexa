@@ -39,7 +39,7 @@ namespace Essenbee.Alexa.Lib.Converters
                     return new LaunchRequest();
                 case "IntentRequest":
                     return new IntentRequest();
-                case "SessionEndRequest":
+                case "SessionEndedRequest":
                     return new SessionEndedRequest();
                 default:
                     throw new ArgumentOutOfRangeException($"Unknown request type {requestType}");
