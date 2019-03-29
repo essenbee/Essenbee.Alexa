@@ -85,6 +85,18 @@ namespace Essenbee.Alexa.Lib
             return this;
         }
 
+        public ResponseBuilder Ask(string speech)
+        {
+            if (_response.Response is null)
+            {
+                _response.Response = new ResponseBody();
+            }
+
+            _response.Response.ShouldEndSession = false;
+            _response.Response.OutputSpeech = new TextOutput(speech);
+            return this;
+        }
+
         public ResponseBuilder Ask(string speech, string repromptSpeech)
         {
             if (_response.Response is null)
@@ -94,11 +106,10 @@ namespace Essenbee.Alexa.Lib
 
             _response.Response.ShouldEndSession = false;
             _response.Response.OutputSpeech = new TextOutput(speech);
-
-            if (!string.IsNullOrWhiteSpace(repromptSpeech))
+            _response.Response.Reprompt = new Reprompt
             {
-                _response.Response.Reprompt.OutputSpeech = new TextOutput(repromptSpeech);
-            }
+                OutputSpeech = new TextOutput(repromptSpeech)
+            };
 
             return this;
         }
