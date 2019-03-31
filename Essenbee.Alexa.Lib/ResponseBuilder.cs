@@ -144,10 +144,13 @@ namespace Essenbee.Alexa.Lib
 
             _response.Response.ShouldEndSession = false;
             _response.Response.OutputSpeech = new TextOutput(speech);
-            _response.Response.Directives.Add(new DialogConfirmSlot(slot)
+            _response.Response.Directives = new List<IDirective>
             {
-                UpdatedIntent = updatedIntent
-            });
+                new DialogConfirmSlot(slot)
+                {
+                    UpdatedIntent = updatedIntent
+                }
+            };
 
             return this;
         }
@@ -161,10 +164,13 @@ namespace Essenbee.Alexa.Lib
 
             _response.Response.ShouldEndSession = false;
             _response.Response.OutputSpeech = new TextOutput(speech);
-            _response.Response.Directives.Add(new DialogElicitSlot(slot)
+            _response.Response.Directives = new List<IDirective>
             {
-                UpdatedIntent = updatedIntent
-            });
+                new DialogElicitSlot(slot)
+                {
+                    UpdatedIntent = updatedIntent
+                }
+            };
 
             return this;
         }
