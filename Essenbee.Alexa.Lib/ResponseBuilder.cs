@@ -1,5 +1,7 @@
-﻿using Essenbee.Alexa.Lib.Request;
+﻿using Essenbee.Alexa.Lib.Interfaces;
+using Essenbee.Alexa.Lib.Request;
 using Essenbee.Alexa.Lib.Response;
+using System.Collections.Generic;
 
 namespace Essenbee.Alexa.Lib
 {
@@ -122,10 +124,13 @@ namespace Essenbee.Alexa.Lib
             }
 
             _response.Response.ShouldEndSession = false;
-            _response.Response.Directives.Add(new DialogDelegate
+            _response.Response.Directives = new List<IDirective>
             {
-                UpdatedIntent = updatedIntent
-            });
+                new DialogDelegate
+                {
+                    UpdatedIntent = updatedIntent
+                }
+            };
 
             return this;
         }
