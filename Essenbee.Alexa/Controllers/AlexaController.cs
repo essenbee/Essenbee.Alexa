@@ -1,5 +1,5 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using Essenbee.Alexa.Alexa;
 using Essenbee.Alexa.Lib;
 using Essenbee.Alexa.Lib.Interfaces;
 using Essenbee.Alexa.Lib.Request;
@@ -7,7 +7,7 @@ using Essenbee.Alexa.Lib.Response;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+using System;
 
 namespace Essenbee.Alexa.Controllers
 {
@@ -19,7 +19,6 @@ namespace Essenbee.Alexa.Controllers
         private ILogger<AlexaController> _logger;
         private readonly IAlexaClient _client;
         private string _userTimeZone = string.Empty;
-        private UserAddress _userAddress;
 
         public AlexaController(IConfiguration config, ILogger<AlexaController> logger, IAlexaClient client)
         {
@@ -32,10 +31,8 @@ namespace Essenbee.Alexa.Controllers
         [ProducesResponseType(200, Type = typeof(AlexaResponse))]
         [ProducesResponseType(400)]
         [Route("api/alexa/devstreams")]
-        public async Task<ActionResult<AlexaResponse>> DevStreams ([FromBody] AlexaRequest alexaRequest )
+        public async Task<ActionResult<AlexaResponse>> DevStreams([FromBody] AlexaRequest alexaRequest)
         {
-            _logger.LogInformation("Arrived here!");
-
             if (!AlexaRequest.ShouldProcessRequest(_config["SkillId"], alexaRequest))
             {
                 _logger.LogError("Bad Request - application id did not match or timestamp tolerance exceeded!");
@@ -44,29 +41,17 @@ namespace Essenbee.Alexa.Controllers
             }
 
             AlexaResponse response = null;
-            var responseBuilder = new ResponseBuilder();
 
             _userTimeZone = await _client.GetUserTimezone(alexaRequest, _logger);
-            _userAddress = await _client.GetUserAddress(alexaRequest, _logger);
-
-            if (_userAddress.StatusCode == System.Net.HttpStatusCode.Forbidden)
-            {
-                response = responseBuilder.Say("You have not given permission to read your address details. Some aspects of this skill may not function optimally.")
-                    .WriteAskForPermissionsCard(new string[] { "read::alexa:device:all:address" })
-                    .Build();
-
-                return response;
-            }
+            _userTimeZone = _userTimeZone.Replace("\"", string.Empty);
 
             switch (alexaRequest.RequestBody.Type)
             {
                 case "LaunchRequest":
-                    var ssml = @"<speak>Welcome to the Dev Streams skill</speak>";
-                    response = responseBuilder.SayWithSsml(ssml)
-                        .Build();
+                    response = Responses.GiveLaunchResponse();
                     break;
                 case "IntentRequest":
-                    response = IntentRequestHandler(alexaRequest);
+                    response = await IntentRequestHandler(alexaRequest);
                     break;
                 case "SessionEndedRequest":
                     response = SessionEndedRequestHandler(alexaRequest);
@@ -86,29 +71,31 @@ namespace Essenbee.Alexa.Controllers
                 var error = sessionEndedRequest.Error;
                 _logger.LogError($"{error.ErrorType} - {error.ErrorMessage}");
             }
+
+            if (sessionEndedRequest.Reason == Reason.UserInitiated)
+            {
+                var response = new ResponseBuilder()
+                .Say(string.Empty)
+                .Build();
+                return response;
+            }
+
             return null;
         }
 
-        private AlexaResponse IntentRequestHandler(AlexaRequest alexaRequest)
+        private async Task<AlexaResponse> IntentRequestHandler(AlexaRequest alexaRequest)
         {
-            var intentRequest = alexaRequest.RequestBody as IntentRequest;
-
-            //var response = new ResponseBuilder()
-            //    .Say($"I received an intent request {intentRequest.Intent.Name}")
-            //    .Build();
-
-
             AlexaResponse response = null;
 
-            if (intentRequest != null)
+            if (alexaRequest.RequestBody is IntentRequest intentRequest)
             {
                 switch (intentRequest.Intent.Name)
                 {
                     case "whenNextIntent":
-                        response = WhenNextResponseHandler(intentRequest);
+                        response = await WhenNextResponseHandler(intentRequest);
                         break;
                     case "whoIsLiveIntent":
-                        response = WhoIsLiveResponseHandler(intentRequest);
+                        response = await WhoIsLiveResponseHandler(intentRequest);
                         break;
                     case "AMAZON.StopIntent":
                     case "AMAZON.CancelIntent":
@@ -117,61 +104,49 @@ namespace Essenbee.Alexa.Controllers
                     case "AMAZON.HelpIntent":
                         response = HelpIntentResponseHandler(intentRequest);
                         break;
+                    case "AMAZON.FallbackIntent":
+                        response = FallbackIntentResponseHandler(intentRequest);
+                        break;
                 }
             }
 
             return response;
         }
 
+        private AlexaResponse FallbackIntentResponseHandler(IntentRequest intentRequest)
+        {
+            return Responses.GiveFallbackResponse();
+        }
+
         private AlexaResponse HelpIntentResponseHandler(IntentRequest intentRequest)
         {
-            var response = new ResponseBuilder()
-                .Say("To use this skill, ask me about the schedule of your favourite stream. " +
-                "You can also say Alexa stop to exit the skill")
-                .Build(); ;
-            return response;
+            return Responses.GiveHelpResponse();
         }
 
         private AlexaResponse CancelOrStopResponseHandler(IntentRequest intentRequest)
         {
-            var response = new ResponseBuilder()
-                .Say("Thanks for using the Dev Streams skill")
-                .Build();
-
-            return response;
+            return Responses.GiveStopResponse();
         }
-
-        private AlexaResponse WhenNextResponseHandler(IntentRequest intentRequest)
+        private Task<AlexaResponse> WhenNextResponseHandler(IntentRequest intentRequest)
         {
-            var channel = "some streamer";
+            var channel = intentRequest.Intent.Slots["channel"].Value;
+            var standardisedChannel = channel
+                .Replace(" ", string.Empty)
+                .Replace(".", string.Empty);
 
-            if (intentRequest.Intent.Slots.Any())
-            {
-                channel = intentRequest.Intent.Slots["channel"].Value;
-            }
+            // TODO: call GraphQL endpoint for soundex channel search
 
-            var city = _userAddress.StatusCode == System.Net.HttpStatusCode.OK
-                ? $" in {_userAddress.City}"
-                : string.Empty;
+            //var response = Responses.GetNextStreamResponse(channel);
 
-            var response = new ResponseBuilder()
-                .Say($"You have asked about {channel} and their schedule in your timezone {_userTimeZone}{city}")
-                .Build();
-
-            return response;
+            throw new NotImplementedException();
         }
-
-        private AlexaResponse WhoIsLiveResponseHandler(IntentRequest intentRequest)
+        private Task<AlexaResponse> WhoIsLiveResponseHandler(IntentRequest intentRequest)
         {
-            var response = new ResponseBuilder()
-                .Say($"Codebase Alpha is streaming now")
-                .WriteSimpleCard("Streaming Now!", "Codebase Alpha")
-                .Build();
+            // TODO: call GrapphQL endpoint for list of currently live channels
 
-            var jsonResponse = JsonConvert.SerializeObject(response);
-            _logger.LogInformation($"{jsonResponse}");
+            //var response = Responses.GetLiveNowResponse(liveChannels);
 
-            return response;
+            throw new NotImplementedException();
         }
     }
 }
