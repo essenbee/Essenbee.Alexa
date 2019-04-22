@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
+using Essenbee.Alexa.Interfaces;
+using Essenbee.Alexa.Clients;
 
 namespace Essenbee.Alexa.Controllers
 {
@@ -19,6 +21,7 @@ namespace Essenbee.Alexa.Controllers
         private ILogger<AlexaController> _logger;
         private readonly IAlexaClient _client;
         private string _userTimeZone = string.Empty;
+        private IChannelClient _channelClient;
 
         public AlexaController(IConfiguration config, ILogger<AlexaController> logger, IAlexaClient client)
         {
@@ -39,6 +42,9 @@ namespace Essenbee.Alexa.Controllers
 
                 return BadRequest();
             }
+
+            var endPoint = _config["DevStreams:GraphQLEndpoint"];
+            _channelClient = new ChannelGraphClient(new GraphQL.Client.GraphQLClient(endPoint));
 
             AlexaResponse response = null;
 
@@ -127,26 +133,24 @@ namespace Essenbee.Alexa.Controllers
         {
             return Responses.GiveStopResponse();
         }
-        private Task<AlexaResponse> WhenNextResponseHandler(IntentRequest intentRequest)
+        private async Task<AlexaResponse> WhenNextResponseHandler(IntentRequest intentRequest)
         {
             var channel = intentRequest.Intent.Slots["channel"].Value;
             var standardisedChannel = channel
                 .Replace(" ", string.Empty)
                 .Replace(".", string.Empty);
 
-            // TODO: call GraphQL endpoint for soundex channel search
+            var matchingChannel = await _channelClient.GetChannelByName(standardisedChannel, _userTimeZone);
+            var response = Responses.GetNextStreamResponse(matchingChannel);
 
-            //var response = Responses.GetNextStreamResponse(channel);
-
-            throw new NotImplementedException();
+            return response;
         }
-        private Task<AlexaResponse> WhoIsLiveResponseHandler(IntentRequest intentRequest)
+        private async Task<AlexaResponse> WhoIsLiveResponseHandler(IntentRequest intentRequest)
         {
-            // TODO: call GrapphQL endpoint for list of currently live channels
+            var liveChannels = await _channelClient.GetLiveChannels(_userTimeZone);
+            var response = Responses.GetLiveNowResponse(liveChannels);
 
-            //var response = Responses.GetLiveNowResponse(liveChannels);
-
-            throw new NotImplementedException();
+            return response;
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Essenbee.Alexa.Lib;
 using Essenbee.Alexa.Lib.Request;
 using Essenbee.Alexa.Lib.Response;
+using Essenbee.Alexa.Models;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -8,58 +9,39 @@ namespace Essenbee.Alexa.Alexa
 {
     public static class Responses
     {
-        //public static async Task<AlexaResponse> GetNextStreamResponse(string userTimeZone, string channel)
-        //{
-        //    AlexaResponse response = null;
+        public static AlexaResponse GetNextStreamResponse(ChannelModel channel)
+        {
+            AlexaResponse response = null;
 
-        //    if (dbChannel != null && !string.IsNullOrWhiteSpace(dbChannel.Name))
-        //    {
-        //        var name = dbChannel.Name;
-        //        var id = dbChannel.Id;
-        //        var sessions = new List<StreamSession>();
+            if (channel != null && !string.IsNullOrWhiteSpace(channel.Name))
+            {
+                var name = channel.Name;
+                var nextStream = channel.NextStream;
+                var nextStreamTimeFormatted = "currently has no future streams set up in the Dev Streams database";
 
-        //        string query = $"SELECT * FROM StreamSessions WHERE ChannelId = @id AND UtcStartTime > GETUTCDATE() ORDER BY UtcStartTime";
-        //        using (System.Data.IDbConnection connection = new SqlConnection(dbSettings.DefaultConnection))
-        //        {
-        //            using (var multi = await connection.QueryMultipleAsync(query, new { id }))
-        //            {
-        //                sessions = (await multi.ReadAsync<StreamSession>()).ToList();
-        //            }
-        //        }
+                if (nextStream != null)
+                {
+                    var zonedDateTime = nextStream.LocalStartTime;
+                    nextStreamTimeFormatted = string.Format("will be streaming next on {0:dddd, MMMM dd} at {0:h:mm tt}", zonedDateTime, zonedDateTime);
+                }
 
-        //        var nextStream = new StreamSession();
-        //        var zonedDateTime = DateTime.MinValue;
-        //        var nextStreamTimeFormatted = "currently has no future streams set up in the Dev Streams database";
+                response = new ResponseBuilder()
+                    .Say($"{name} {nextStreamTimeFormatted}")
+                    .WriteSimpleCard($"{name}", $"{name} {nextStreamTimeFormatted}")
+                    .Build();
+            }
+            else
+            {
+                response = new ResponseBuilder()
+                    .Say($"Sorry, I could not find {channel} in my database of live coding streamers")
+                    .WriteSimpleCard("Not Found", $"{channel} is not in the DevStreams database")
+                    .Build();
+            }
 
-        //        if (sessions.Count > 0)
-        //        {
-        //            nextStream = sessions.FirstOrDefault();
+            return response;
+        }
 
-        //            if (nextStream != null)
-        //            {
-        //                DateTimeZone zone = DateTimeZoneProviders.Tzdb[userTimeZone];
-        //                zonedDateTime = nextStream.UtcStartTime.InZone(zone).ToDateTimeUnspecified();
-        //                nextStreamTimeFormatted = string.Format("will be streaming next on {0:dddd, MMMM dd} at {0:h:mm tt}", zonedDateTime, zonedDateTime);
-        //            }
-        //        }
-
-        //        response = new ResponseBuilder()
-        //            .Say($"{name} {nextStreamTimeFormatted}")
-        //            .WriteSimpleCard($"{name}", $"{name} {nextStreamTimeFormatted}")
-        //            .Build();
-        //    }
-        //    else
-        //    {
-        //        response = new ResponseBuilder()
-        //            .Say($"Sorry, I could not find {channel} in my database of live coding streamers")
-        //            .WriteSimpleCard("Not Found", $"{channel} is not in the DevStreams database")
-        //            .Build();
-        //    }
-
-        //    return response;
-        //}
-
-        public static AlexaResponse GetLiveNowResponse(List<string> liveChannels)
+        public static AlexaResponse GetLiveNowResponse(List<ChannelModel> liveChannels)
         {
             var response = new ResponseBuilder()
                 .Say("None of the streamers in my database are currently broadcasting")
@@ -68,22 +50,23 @@ namespace Essenbee.Alexa.Alexa
 
             if (liveChannels != null && liveChannels.Count > 0)
             {
-                var firstFew = string.Join(", ", liveChannels.Take(3));
+                var channelNames = liveChannels.Select(x => x.Name).ToList();
+                var firstFew = string.Join(", ", channelNames.Take(3));
 
-                var howMany = liveChannels.Count == 1
-                    ? $"{liveChannels.First()} is broadcasting now."
-                    : $"{liveChannels.Count} streamers are broadcasting now:";
+                var howMany = channelNames.Count == 1
+                    ? $"{channelNames.First()} is broadcasting now."
+                    : $"{channelNames.Count} streamers are broadcasting now:";
 
                 var streamers = string.Empty;
 
-                if (liveChannels.Count == 2)
+                if (channelNames.Count == 2)
                 {
-                    streamers = $"{liveChannels[0]} and {liveChannels[1]}";
+                    streamers = $"{channelNames[0]} and {channelNames[1]}";
                 }
 
                 if (liveChannels.Count == 3)
                 {
-                    streamers = $"{liveChannels[0]}, {liveChannels[1]} and {liveChannels[2]}";
+                    streamers = $"{channelNames[0]}, {channelNames[1]} and {channelNames[2]}";
                 }
 
                 if (liveChannels.Count > 3)
