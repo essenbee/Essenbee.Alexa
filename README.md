@@ -1,6 +1,6 @@
 # Essenbee.Alexa and Essenbee.Alexa.Lib
 
-We are building an Alexa Skill live on-stream at [Codebase Alpha](https://twitch.tv/codebasealpha) on Twitch. The skill, called DevStreams, is going to be the voice interface for the DevStreams community website that is being developed on the [DevChatter](https://twitch.tv/devchatter) Twitch stream by Brendan Enrick. The fork of that repo can be found in this Github, so you can see how that integration is going by looking at that.
+We are building an Alexa Skill live on-stream at [Codebase Alpha](https://twitch.tv/codebasealpha) on Twitch. The skill, called _DevStreams_, is the voice interface for the **DevStreams** community website that is being developed on the [DevChatter](https://twitch.tv/devchatter) Twitch stream by Brendan Enrick and contributors. A fork of that repo can be found in this Github. Integration has been achieved through the introduction of a GraphQL endpoint into the DevStreams solution (also developed on-stream at Codebase Alpha). The `Essenbee.Alexa` code uses this endpoint to query DevStreams and thus provide users with the information about live coding streams that they have requested.
 
 The primary reusable component created in this project is the `Essenbee.Alexa.Lib` NuGet package. Please see below for installation and usage instructions.
 
