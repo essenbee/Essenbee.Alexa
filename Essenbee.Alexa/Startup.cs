@@ -44,7 +44,7 @@ namespace Essenbee.Alexa
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            Configuration["SkillId"] = GetSkillAppId();
+            //Configuration["SkillId"] = GetSkillAppId();
 
             if (env.IsDevelopment())
             {
@@ -69,6 +69,8 @@ namespace Essenbee.Alexa
             {
                 appBuilder.UseAlexaRequestValidation();
             });
+
+            app.UseStaticFiles();
 
             app.UseMvc();
         }
