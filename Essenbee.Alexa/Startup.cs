@@ -1,4 +1,6 @@
 ﻿using System;
+using Essenbee.Alexa.Clients;
+using Essenbee.Alexa.Interfaces;
 using Essenbee.Alexa.Lib.HttpClients;
 using Essenbee.Alexa.Lib.Interfaces;
 using Essenbee.Alexa.Lib.Middleware;
@@ -26,6 +28,7 @@ namespace Essenbee.Alexa
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddHttpClient<IAlexaClient, AlexaClient>();
+            services.AddScoped<IChannelClient, ChannelGraphClient>();
 
             services.AddSwaggerGen(c =>
             {

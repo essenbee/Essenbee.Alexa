@@ -4,9 +4,8 @@ using GraphQL.Client;
 using GraphQL.Common.Exceptions;
 using GraphQL.Common.Request;
 using GraphQL.Common.Response;
-using System;
+using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -16,9 +15,10 @@ namespace Essenbee.Alexa.Clients
     {
         private readonly GraphQLClient _client;
 
-        public ChannelGraphClient(GraphQLClient client)
+        public ChannelGraphClient(IConfiguration config)
         {
-            _client = client;
+            var endPoint = config["DevStreams:GraphQLEndpoint"];
+            _client = new GraphQLClient(endPoint);
         }
 
         public async Task<List<ChannelModel>> GetLiveChannels(string userTimeZone)
@@ -59,6 +59,7 @@ namespace Essenbee.Alexa.Clients
                             { 
                               localStartTime (timeZone: $tz)
                               localEndTime (timeZone: $tz)
+                              utcStartTime
                             }
                         }
                 }",

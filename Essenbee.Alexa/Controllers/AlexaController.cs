@@ -7,9 +7,7 @@ using Essenbee.Alexa.Lib.Response;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using System;
 using Essenbee.Alexa.Interfaces;
-using Essenbee.Alexa.Clients;
 
 namespace Essenbee.Alexa.Controllers
 {
@@ -23,11 +21,13 @@ namespace Essenbee.Alexa.Controllers
         private string _userTimeZone = string.Empty;
         private IChannelClient _channelClient;
 
-        public AlexaController(IConfiguration config, ILogger<AlexaController> logger, IAlexaClient client)
+        public AlexaController(IConfiguration config, ILogger<AlexaController> logger, 
+            IAlexaClient client, IChannelClient channelClient)
         {
             _config = config;
             _logger = logger;
             _client = client;
+            _channelClient = channelClient;
         }
 
         [HttpPost]
@@ -42,9 +42,6 @@ namespace Essenbee.Alexa.Controllers
 
                 return BadRequest();
             }
-
-            var endPoint = _config["DevStreams:GraphQLEndpoint"];
-            _channelClient = new ChannelGraphClient(new GraphQL.Client.GraphQLClient(endPoint));
 
             AlexaResponse response = null;
 

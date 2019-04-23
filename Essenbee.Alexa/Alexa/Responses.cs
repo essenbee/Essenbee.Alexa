@@ -2,6 +2,7 @@
 using Essenbee.Alexa.Lib.Request;
 using Essenbee.Alexa.Lib.Response;
 using Essenbee.Alexa.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -22,7 +23,19 @@ namespace Essenbee.Alexa.Alexa
                 if (nextStream != null)
                 {
                     var zonedDateTime = nextStream.LocalStartTime;
-                    nextStreamTimeFormatted = string.Format("will be streaming next on {0:dddd, MMMM dd} at {0:h:mm tt}", zonedDateTime, zonedDateTime);
+
+                    if (nextStream.UtcStartTime.Date == DateTime.UtcNow.Date)
+                    {
+                        nextStreamTimeFormatted = string.Format("will be streaming next today at {0:h:mm tt}", zonedDateTime);
+                    }
+                    else if (nextStream.UtcStartTime.Date == DateTime.UtcNow.Date.AddDays(1))
+                    {
+                        nextStreamTimeFormatted = string.Format("will be streaming next tomorrow at {0:h:mm tt}", zonedDateTime);
+                    }
+                    else
+                    {
+                        nextStreamTimeFormatted = string.Format("will be streaming next on {0:dddd, MMMM dd} at {0:h:mm tt}", zonedDateTime, zonedDateTime);
+                    }
                 }
 
                 response = new ResponseBuilder()
