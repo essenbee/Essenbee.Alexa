@@ -33,19 +33,28 @@ namespace Essenbee.Alexa.Lib.HttpClients
             _client.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", token);
 
-            var result = await _client.GetAsync(url);
-
-            logger.LogInformation($"Status = {result.StatusCode}");
-
-            if (result.StatusCode == System.Net.HttpStatusCode.OK)
+            HttpResponseMessage result;
+            try
             {
-                var userAddressJson = await result.Content.ReadAsStringAsync();
+                result = await _client.GetAsync(url);
 
-                var userAddress = JsonConvert.DeserializeObject<UserAddress>(userAddressJson);
-                userAddress.StatusCode = result.StatusCode;
+                logger.LogInformation($"Status = {result.StatusCode}");
 
-                logger.LogInformation($"User City = {userAddress.City}");
-                return userAddress;
+                if (result.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    var userAddressJson = await result.Content.ReadAsStringAsync();
+
+                    var userAddress = JsonConvert.DeserializeObject<UserAddress>(userAddressJson);
+                    userAddress.StatusCode = result.StatusCode;
+
+                    logger.LogInformation($"User City = {userAddress.City}");
+                    return userAddress;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Error = {ex.Message}");
+                return new UserAddress(System.Net.HttpStatusCode.BadRequest);
             }
 
             return new UserAddress(result.StatusCode);
@@ -65,16 +74,23 @@ namespace Essenbee.Alexa.Lib.HttpClients
             _client.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", token);
 
-            var result = await _client.GetAsync(url);
-
-            logger.LogInformation($"Status = {result.StatusCode}");
-
-            if (result.StatusCode == System.Net.HttpStatusCode.OK)
+            try
             {
-                var timezone = await result.Content.ReadAsStringAsync();
+                var result = await _client.GetAsync(url);
 
-                logger.LogInformation($"TZ = {timezone}");
-                return timezone;
+                logger.LogInformation($"Status = {result.StatusCode}");
+
+                if (result.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    var timezone = await result.Content.ReadAsStringAsync();
+
+                    logger.LogInformation($"TZ = {timezone}");
+                    return timezone;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Error = {ex.Message}");
             }
 
             return String.Empty;
