@@ -10,7 +10,7 @@ namespace Essenbee.Alexa.Alexa
 {
     public static class Responses
     {
-        public static AlexaResponse GetNextStreamResponse(ChannelModel channel)
+        public static AlexaResponse GetNextStreamResponse(string channelName, ChannelModel channel)
         {
             AlexaResponse response = null;
 
@@ -46,8 +46,8 @@ namespace Essenbee.Alexa.Alexa
             else
             {
                 response = new ResponseBuilder()
-                    .Say($"Sorry, I could not find {channel} in my database of live coding streamers")
-                    .WriteSimpleCard("Not Found", $"{channel} is not in the DevStreams database")
+                    .Say($"Sorry, I could not find {channelName} in my database of live coding streamers")
+                    .WriteSimpleCard("Not Found", $"{channelName} is not in the DevStreams database")
                     .Build();
             }
 

@@ -138,7 +138,7 @@ namespace Essenbee.Alexa.Controllers
                 .Replace(".", string.Empty);
 
             var matchingChannel = await _channelClient.GetChannelByName(standardisedChannel, _userTimeZone);
-            var response = Responses.GetNextStreamResponse(matchingChannel);
+            var response = Responses.GetNextStreamResponse(standardisedChannel, matchingChannel);
 
             return response;
         }
