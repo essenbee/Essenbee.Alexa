@@ -1,6 +1,7 @@
 # Essenbee.Alexa and Essenbee.Alexa.Lib
 
 [![Build status](https://ci.appveyor.com/api/projects/status/6dbvrjgbvsk1hl58/branch/master?svg=true)](https://ci.appveyor.com/project/essenbee/essenbee-alexa/branch/master)
+![Tests](https://img.shields.io/appveyor/tests/essenbee/essenbee-alexa.svg)
 
 ![Twitter](https://img.shields.io/twitter/follow/codebasealpha.svg?style=social)
 
