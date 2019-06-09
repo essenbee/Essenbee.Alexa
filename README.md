@@ -13,6 +13,7 @@ The main phase of development for this code is encompassed by Episodes 4 - 11 of
 # Installation
 
 [![nuget](https://img.shields.io/nuget/v/Essenbee.Alexa.Lib.svg)](https://www.nuget.org/packages/Essenbee.Alexa.Lib/)
+![Downloads](https://img.shields.io/nuget/dt/essenbee.alexa.lib.svg)
 
 Install the `Essenbee.Alexa.Lib` NET Standard 2.0 library into your own ASP.NET Core (2.2+) Web App or Web API via Nuget with the command:
 
