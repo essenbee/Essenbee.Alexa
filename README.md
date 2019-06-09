@@ -2,6 +2,7 @@
 
 [![Build status](https://ci.appveyor.com/api/projects/status/6dbvrjgbvsk1hl58/branch/master?svg=true)](https://ci.appveyor.com/project/essenbee/essenbee-alexa/branch/master)
 ![Tests](https://img.shields.io/appveyor/tests/essenbee/essenbee-alexa.svg)
+![Release](https://img.shields.io/azure-devops/release/StuartBonham/e0ef6a08-9395-40ee-85c1-0709a15424fe/1/1.svg)
 
 ![Twitter](https://img.shields.io/twitter/follow/codebasealpha.svg?style=social)
 
